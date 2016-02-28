@@ -95,7 +95,7 @@ namespace Obfuscar
 			}
 
 			// It's not very clean to use CheckMethodVisibility() from MethodTester. But we don't want duplicate code either.
-			if (MethodTester.CheckMemberVisibility (attrib, typeAttrib, (MethodAttributes)field.FieldAttributes, field.DeclaringType)) {
+			if (!MethodTester.MemberVisibilityMatches (attrib, typeAttrib, (MethodAttributes)field.FieldAttributes, field.DeclaringType)) {
 				return false;
 			}
 

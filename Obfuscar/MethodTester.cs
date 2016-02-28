@@ -86,7 +86,7 @@ namespace Obfuscar
 			}
 
 			// method visibility matches
-			if (CheckMemberVisibility (this.attrib, typeAttrib, method.MethodAttributes, method.DeclaringType)) {
+			if (!MemberVisibilityMatches (this.attrib, typeAttrib, method.MethodAttributes, method.DeclaringType)) {
 				return false;
 			}
 
@@ -119,7 +119,7 @@ namespace Obfuscar
 			return true;
 		}
 
-		static public bool CheckMemberVisibility (string attribute, string typeAttribute, MethodAttributes methodAttributes, TypeDefinition declaringType)
+		static public bool MemberVisibilityMatches (string attribute, string typeAttribute, MethodAttributes methodAttributes, TypeDefinition declaringType)
 		{
 			if (!string.IsNullOrEmpty (typeAttribute)) {
 				if (string.Equals (typeAttribute, "public", StringComparison.InvariantCultureIgnoreCase)) {
@@ -133,19 +133,16 @@ namespace Obfuscar
 				MethodAttributes accessmask = (methodAttributes & MethodAttributes.MemberAccessMask);
 				if (string.Equals (attribute, "public", StringComparison.CurrentCultureIgnoreCase)) {
 					if (accessmask != MethodAttributes.Public)
-						return true;
+						return false;
 				} else if (string.Equals (attribute, "protected", StringComparison.CurrentCultureIgnoreCase)) {
-					if (!(accessmask == MethodAttributes.Public || accessmask == MethodAttributes.Family || accessmask == MethodAttributes.FamORAssem))
-						return true;
+					if (accessmask == MethodAttributes.Public || accessmask == MethodAttributes.Family || accessmask == MethodAttributes.FamORAssem)
+						return false;
 				} else
 					throw new ObfuscarException (string.Format ("'{0}' is not valid for the 'attrib' value of skip elements. Only 'public' and 'protected' are supported by now.", attribute));
-				
-				// attrib value given, but the member is not public/protected. We signal that the Skip* rule should be ignored. The member is obfuscated in any case.
-				return false;
 			}		
 
 			// No attrib value given: The Skip* rule is processed normally.
-			return false;
+			return true;
 		}
 	}
 }
