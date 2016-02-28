@@ -85,6 +85,7 @@
     <Compile Include="Helpers\MethodDefinitionExtensions.cs" />
     <Compile Include="Helpers\PropertyDefinitionExtensions.cs" />
     <Compile Include="Helpers\TypeReferenceExtensions.cs" />
+    <Compile Include="NameMaker2.cs" />
     <Compile Include="NamespaceTester.cs" />
     <Compile Include="ObfuscarException.cs" />
     <Compile Include="PropertyKey.cs" />

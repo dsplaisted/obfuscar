@@ -322,7 +322,8 @@ namespace Obfuscar
 				return;
 			}
 
-			var newName = Project.Settings.ReuseNames ? nameGroup.GetNext () : NameMaker.UniqueName (_uniqueMemberNameIndex++);
+			//var newName = Project.Settings.ReuseNames ? nameGroup.GetNext () : NameMaker.UniqueName (_uniqueMemberNameIndex++);
+		    var newName = NameMaker2.HashName(fieldKey.Name);
 
 			RenameField (info, fieldKey, field, newName);
 			nameGroup.Add (newName);
@@ -374,8 +375,11 @@ namespace Obfuscar
 						continue;
 
 					int index = 0;
-					foreach (GenericParameter param in type.GenericParameters)
-						param.Name = NameMaker.UniqueName (index++);
+				    foreach (GenericParameter param in type.GenericParameters)
+				    {
+				        //param.Name = NameMaker.UniqueName(index++);
+				        param.Name = NameMaker2.HashName(param.Name);
+				    }
 				}
 			}
 		}
@@ -393,8 +397,11 @@ namespace Obfuscar
 
 			int index = 0;
 			foreach (GenericParameter param in method.GenericParameters)
-				if (param.CustomAttributes.Count == 0)
-					param.Name = NameMaker.UniqueName (index++);
+			    if (param.CustomAttributes.Count == 0)
+			    {
+			        //param.Name = NameMaker.UniqueName(index++);
+                    param.Name = NameMaker2.HashName(param.Name);
+			    }
 		}
 
 		/// <summary>
@@ -471,14 +478,19 @@ namespace Obfuscar
 					string ns;
 					if (type.IsNested) {
 						ns = "";
-						name = NameMaker.UniqueNestedTypeName (type.DeclaringType.NestedTypes.IndexOf (type));
+						//name = NameMaker.UniqueNestedTypeName (type.DeclaringType.NestedTypes.IndexOf (type));
+					    name = NameMaker2.HashName(type.Name);
 					} else {
 						if (Project.Settings.ReuseNames) {
-							name = NameMaker.UniqueTypeName (typeIndex);
-							ns = NameMaker.UniqueNamespace (typeIndex);
+							//name = NameMaker.UniqueTypeName (typeIndex);
+                            name = NameMaker2.HashName(type.Name);
+							//ns = NameMaker.UniqueNamespace (typeIndex);
+						    ns = NameMaker2.HashName(type.Namespace);
 						} else {
-							name = NameMaker.UniqueName (_uniqueTypeNameIndex);
-							ns = NameMaker.UniqueNamespace (_uniqueTypeNameIndex);
+							//name = NameMaker.UniqueName (_uniqueTypeNameIndex);
+                            name = NameMaker2.HashName(type.Name);
+							//ns = NameMaker.UniqueNamespace (_uniqueTypeNameIndex);
+                            ns = NameMaker2.HashName(type.Namespace);
 							_uniqueTypeNameIndex++;
 						}
 					}
@@ -721,7 +733,8 @@ namespace Obfuscar
 				// no problem when the getter or setter methods are renamed by RenameMethods()
 			} else if (prop.CustomAttributes.Count > 0) {
 				// If a property has custom attributes we don't remove the property but rename it instead.
-				var newName = NameMaker.UniqueName (Project.Settings.ReuseNames ? index++ : _uniqueMemberNameIndex++);
+				//var newName = NameMaker.UniqueName (Project.Settings.ReuseNames ? index++ : _uniqueMemberNameIndex++);
+			    var newName = NameMaker2.HashName(prop.Name);
 				RenameProperty (info, propKey, prop, newName);
 			} else {
 				// add to to collection for removal
@@ -950,7 +963,8 @@ namespace Obfuscar
 					groupName = method.Name;
 				} else {
 					// for an internal group, get next unused name
-					groupName = NameGroup.GetNext (nameGroups);
+					//groupName = NameGroup.GetNext (nameGroups);
+				    groupName = NameMaker2.HashName(method.Name);
 				}
 
 				@group.Name = groupName;
@@ -1047,7 +1061,8 @@ namespace Obfuscar
 
 			NameGroup nameGroup = GetNameGroup (sigNames, sig);
 
-			string newName = nameGroup.GetNext ();
+			//string newName = nameGroup.GetNext ();
+		    string newName = NameMaker2.HashName(method.Name);
 
 			// make sure the name groups is updated
 			nameGroup.Add (newName);
