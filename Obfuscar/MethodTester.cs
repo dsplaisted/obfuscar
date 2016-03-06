@@ -119,33 +119,52 @@ namespace Obfuscar
 			return true;
 		}
 
+	    static bool GetMemberVisibilityValue(string valueName, MethodAttributes methodAttributes, TypeDefinition declaringType)
+	    {
+	        valueName = valueName.ToLowerInvariant();
+	        var visibility = methodAttributes & MethodAttributes.MemberAccessMask;
+	        if (valueName.StartsWith("type."))
+	        {
+	            return TypeTester.GetTypeVisibilityValue(valueName.Substring("type.".Length), declaringType);
+	        }
+            else if (valueName == "public")
+            {
+                return visibility == MethodAttributes.Public;
+            }
+            else if (valueName == "protected")
+            {
+                return visibility == MethodAttributes.Family || visibility == MethodAttributes.FamORAssem || visibility == MethodAttributes.FamANDAssem;
+            }
+            else if (valueName == "internal")
+            {
+                return visibility == MethodAttributes.Assembly || visibility == MethodAttributes.FamORAssem ||
+                       visibility == MethodAttributes.FamANDAssem;
+            }
+            else if (valueName == "private")
+            {
+                return visibility == MethodAttributes.Private;
+            }
+            else
+            {
+                throw new ObfuscarException($"Unrecognized value in expression: {valueName}");
+            }
+	    }
+
 		static public bool MemberVisibilityMatches (string attribute, string typeAttribute, MethodAttributes methodAttributes, TypeDefinition declaringType)
 		{
 			if (!string.IsNullOrEmpty (typeAttribute)) {
-				if (string.Equals (typeAttribute, "public", StringComparison.InvariantCultureIgnoreCase)) {
-					if (!declaringType.IsTypePublic ())
-						return false;
-                } if (string.Equals (typeAttribute, "internal", StringComparison.InvariantCultureIgnoreCase)) {
-                    var visibility = (declaringType.Attributes & TypeAttributes.VisibilityMask);
-                    if (visibility != TypeAttributes.NestedFamily && visibility != TypeAttributes.NestedFamORAssem)
-                        return false;
-                } else
-					throw new ObfuscarException (string.Format ("'{0}' is not valid for the 'typeattrib' value of skip elements. Only 'public' is supported by now.", typeAttribute));
+			    if (!ExpressionEvaluator.Evaluate(typeAttribute, s => TypeTester.GetTypeVisibilityValue(s, declaringType)))
+			    {
+                    return false;
+			    }
 			}
 
 			if (!string.IsNullOrEmpty (attribute)) {
 				MethodAttributes accessmask = (methodAttributes & MethodAttributes.MemberAccessMask);
-				if (string.Equals (attribute, "public", StringComparison.CurrentCultureIgnoreCase)) {
-					if (accessmask != MethodAttributes.Public)
-						return false;
-				} else if (string.Equals (attribute, "protected", StringComparison.CurrentCultureIgnoreCase)) {
-					if (accessmask == MethodAttributes.Public || accessmask == MethodAttributes.Family || accessmask == MethodAttributes.FamORAssem)
-						return false;
-				} else if (string.Equals(attribute, "internal", StringComparison.CurrentCultureIgnoreCase)) {
-                    if (accessmask != MethodAttributes.Family && accessmask != MethodAttributes.FamORAssem)
-                        return false;
-				} else
-					throw new ObfuscarException (string.Format ("'{0}' is not valid for the 'attrib' value of skip elements. Only 'public' and 'protected' are supported by now.", attribute));
+			    if (!ExpressionEvaluator.Evaluate(attribute, s => GetMemberVisibilityValue(s, accessmask, declaringType)))
+			    {
+                    return false;
+			    }
 			}		
 
 			// No attrib value given: The Skip* rule is processed normally.

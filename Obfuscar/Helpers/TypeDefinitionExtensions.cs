@@ -1,4 +1,5 @@
-﻿using Mono.Cecil;
+﻿using System;
+using Mono.Cecil;
 using System.Linq;
 
 namespace Obfuscar.Helpers
@@ -10,11 +11,53 @@ namespace Obfuscar.Helpers
 			if (type.DeclaringType == null)
 				return type.IsPublic;
 
-			if (type.IsNestedFamily || type.IsNestedFamilyOrAssembly || type.IsNestedPublic)
+			if (type.IsNestedPublic)
 				return IsTypePublic (type.DeclaringType);
 
 			return false;
 		}
+
+        static public bool IsTypeProtected(this TypeDefinition type)
+	    {
+	        if (type.DeclaringType == null)
+	        {
+                return false;
+	        }
+
+	        if (type.IsNestedFamily || type.IsNestedFamilyOrAssembly)
+	        {
+	            return IsTypePublic(type.DeclaringType) || IsTypeProtected(type.DeclaringType);
+	        }
+
+            return false;
+	    }
+
+	    static public bool IsTypeInternal(this TypeDefinition type)
+	    {
+	        var visibility = (type.Attributes & TypeAttributes.VisibilityMask);
+	        if (visibility == TypeAttributes.NotPublic)
+	        {
+                return true;
+	        }
+
+	        if (type.DeclaringType == null)
+	        {
+                return false;
+	        }
+
+	        if (type.IsNestedAssembly || type.IsNestedFamilyOrAssembly || type.IsNestedFamilyAndAssembly)
+	        {
+	            return IsTypePublic(type.DeclaringType) || IsTypeInternal(type.DeclaringType);
+	        }
+
+            return false;
+	    }
+
+	    static public bool IsTypePrivate(this TypeDefinition type)
+	    {
+	        var visibility = (type.Attributes & TypeAttributes.VisibilityMask);
+	        return visibility == TypeAttributes.NestedPrivate;
+	    }
 
 		public static bool? MarkedToRename (this IMemberDefinition type, bool fromMember = false)
 		{

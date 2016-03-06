@@ -24,6 +24,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
+using Mono.Cecil;
 using Obfuscar.Helpers;
 
 namespace Obfuscar
@@ -90,16 +91,39 @@ namespace Obfuscar
 			this.isSerializable = isSeriablizable;
 		}
 
+        public static bool GetTypeVisibilityValue(string valueName, TypeDefinition type)
+	    {
+            valueName = valueName.ToLowerInvariant();
+            var visibility = type.Attributes & TypeAttributes.VisibilityMask;
+	        if (valueName == "public")
+	        {
+	            return type.IsTypePublic();
+	        }
+            else if (valueName == "protected")
+            {
+                return type.IsTypeProtected();
+            }
+            else if (valueName == "internal")
+            {
+                return type.IsTypeInternal();
+            }
+            else if (valueName == "private")
+            {
+                return type.IsTypePrivate();
+            }
+            else
+            {
+                throw new ObfuscarException($"Unrecognized value in expression: {valueName}");
+            }
+	    }
+
 		public bool Test (TypeKey type, InheritMap map)
 		{
 			if (!string.IsNullOrEmpty (attrib)) {
-				if (string.Equals (attrib, "public", StringComparison.InvariantCultureIgnoreCase)) {
-					if (!type.TypeDefinition.IsTypePublic ()) {
-						return false;
-					}
-				} else {
-					throw new ObfuscarException (string.Format ("'{0}' is not valid for the 'attrib' value of the SkipType element. Only 'public' is supported by now.", attrib));
-				}
+			    if (!ExpressionEvaluator.Evaluate(attrib, s => TypeTester.GetTypeVisibilityValue(s, type.TypeDefinition)))
+			    {
+                    return false;
+			    }
 			}
 
 			// type's regex matches
