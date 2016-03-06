@@ -220,8 +220,10 @@ namespace Obfuscar
 						MsNetSigner.SignAssemblyFromKeyContainer (outName, Project.KeyContainerName);
 					}
 
-					if (Project.KeyPair != null) {
-						parameters.StrongNameKeyPair = new System.Reflection.StrongNameKeyPair (Project.KeyPair);
+				    byte[] keyPair = info.KeyPair ?? Project.KeyPair;
+                    
+					if (keyPair != null) {
+						parameters.StrongNameKeyPair = new System.Reflection.StrongNameKeyPair (keyPair);
 						info.Definition.Write (outName, parameters);
 					}
 				} else {

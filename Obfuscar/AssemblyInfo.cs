@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Diagnostics;
+using System.IO;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
@@ -59,6 +60,9 @@ namespace Obfuscar
 		private string name;
 		private bool exclude = false;
 
+	    private string keyFile;
+	    private byte[] keyPair;
+
 		public bool Exclude {
 			get { return exclude; }
 			set { exclude = value; }
@@ -86,9 +90,6 @@ namespace Obfuscar
 			string val = Helper.GetAttribute (reader, "file", vars);
 			if (val.Length > 0) {
 				info.LoadAssembly (val);
-
-				if (AssemblyIsSigned (info.Definition) && project.Settings.KeyFile == null)
-					throw new ObfuscarException ("Obfuscating a signed assembly would result in an invalid assembly:  " + info.Name + "; use the KeyFile property to set a key to use");
 			} else
 				throw new InvalidOperationException ("Need valid file attribute.");
 
@@ -272,6 +273,9 @@ namespace Obfuscar
 								info.forceEvents.Add (new EventTester (name, type, attrib, typeattrib));
 							}
 							break;
+                        case "KeyFile":
+                            info.keyFile = Helper.GetAttribute (reader, "value", vars);
+                            break;
 						}                    
 					} else if (reader.NodeType == XmlNodeType.EndElement && reader.Name == "Module") {
 						// hit end of module element...stop reading
@@ -279,6 +283,9 @@ namespace Obfuscar
 					}
 				}
 			}
+
+            if (AssemblyIsSigned (info.Definition) && info.KeyPair == null && project.Settings.KeyFile == null)
+				throw new ObfuscarException ("Obfuscating a signed assembly would result in an invalid assembly:  " + info.Name + "; use the KeyFile property to set a key to use");
 
 			return info;
 		}
@@ -596,6 +603,29 @@ namespace Obfuscar
 		public List<AssemblyInfo> ReferencedBy {
 			get { return referencedBy; }
 		}
+
+	    public byte[] KeyPair
+	    {
+	        get
+	        {
+	            if (keyFile == null)
+	            {
+                    return null;
+	            }
+
+	            if (keyPair != null)
+	            {
+	                return keyPair;
+	            }
+
+                try {
+					keyPair = File.ReadAllBytes (keyFile);
+				} catch (Exception ex) {
+					throw new ObfuscarException (String.Format ("Failure loading key file \"{0}\"", keyFile), ex);
+				}
+	            return keyPair;
+	        }
+	    }
 
 		private bool ShouldSkip (string ns, InheritMap map)
 		{
