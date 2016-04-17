@@ -716,14 +716,17 @@ namespace Obfuscar
 
 			if (method.Method.IsSpecialName) {
 				switch (method.Method.SemanticsAttributes) {
+                //  The right thing to do here is to check to see if the property or method that this is a getter/setter/adder/remover for is being renamed
+                //  For now just don't rename these at all
 				case MethodSemanticsAttributes.Getter:
 				case MethodSemanticsAttributes.Setter:
 					message = "skipping properties";
-					return !project.Settings.RenameProperties;
+                    return true;
 				case MethodSemanticsAttributes.AddOn:
 				case MethodSemanticsAttributes.RemoveOn:
 					message = "skipping events";
-					return !project.Settings.RenameEvents;
+                    //return !project.Settings.RenameEvents;
+                    return true;
 				default:
 					message = "special name";
 					return true;
